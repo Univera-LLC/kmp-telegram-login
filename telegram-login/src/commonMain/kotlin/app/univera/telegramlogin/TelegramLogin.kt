@@ -1,7 +1,6 @@
 package app.univera.telegramlogin
 
 import app.univera.telegramlogin.internal.Pkce
-import app.univera.telegramlogin.internal.TelegramAuthContext
 import app.univera.telegramlogin.internal.TelegramOAuthClient
 import app.univera.telegramlogin.internal.openExternalUri
 import app.univera.telegramlogin.internal.openWebAuth

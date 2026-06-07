@@ -1,29 +1,16 @@
 package app.univera.telegramlogin.internal
 
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
+import app.univera.telegramlogin.TelegramAuthContext
 import java.security.SecureRandom
 
 internal actual fun secureRandomBytes(size: Int): ByteArray =
     ByteArray(size).also { SecureRandom().nextBytes(it) }
 
 internal actual val sdkPlatformParam: String = "android_sdk"
-
-/**
- * Android handle. Construct with an `Activity` (or any `Context`):
- * `TelegramAuthContext(activity)`. The no-arg constructor exists only to
- * satisfy the common `expect` declaration and cannot launch Telegram.
- */
-public actual class TelegramAuthContext actual constructor() {
-    internal var context: Context? = null
-
-    public constructor(context: Context) : this() {
-        this.context = context
-    }
-}
 
 internal actual fun openExternalUri(context: TelegramAuthContext, uri: String): Boolean {
     val ctx = context.context ?: return false

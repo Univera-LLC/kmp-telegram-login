@@ -1,5 +1,6 @@
 package app.univera.telegramlogin.internal
 
+import app.univera.telegramlogin.TelegramAuthContext
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.cValue
@@ -30,9 +31,6 @@ internal actual fun secureRandomBytes(size: Int): ByteArray {
 }
 
 internal actual val sdkPlatformParam: String = "ios_sdk"
-
-/** iOS handle. No state required — the shared `UIApplication` performs the open. */
-public actual class TelegramAuthContext actual constructor()
 
 internal actual fun openExternalUri(context: TelegramAuthContext, uri: String): Boolean {
     val url = NSURL.URLWithString(uri) ?: return false

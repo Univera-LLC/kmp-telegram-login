@@ -10,7 +10,7 @@ kotlin {
     jvmToolchain(25)
 
     compilerOptions {
-        // expect/actual classes are Beta in Kotlin 2.3.x — silence the warning.
+        // expect/actual classes are still Beta — silence the warning.
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 

@@ -5,7 +5,9 @@ plugins {
     alias(libs.plugins.vanniktechMavenPublish)
 }
 
-val libVersion = "0.2.0"
+// Version comes from the GitHub Release tag in CI (-PlibVersion=<tag without 'v'>);
+// falls back to this for local builds / publishToMavenLocal.
+val libVersion = providers.gradleProperty("libVersion").orNull ?: "0.2.0"
 
 kotlin {
     jvmToolchain(25)

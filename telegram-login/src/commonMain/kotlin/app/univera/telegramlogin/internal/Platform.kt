@@ -13,7 +13,7 @@ internal expect val sdkPlatformParam: String
  *   `TelegramAuthContext(activity)`.
  * - **iOS:** construct with no arguments — `TelegramAuthContext()`.
  */
-expect class TelegramAuthContext()
+public expect class TelegramAuthContext()
 
 /**
  * Opens [uri] — a `tg://` cross-app link or its `https` universal link — in the

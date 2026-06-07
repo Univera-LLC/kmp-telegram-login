@@ -17,10 +17,10 @@ internal actual val sdkPlatformParam: String = "android_sdk"
  * `TelegramAuthContext(activity)`. The no-arg constructor exists only to
  * satisfy the common `expect` declaration and cannot launch Telegram.
  */
-actual class TelegramAuthContext actual constructor() {
+public actual class TelegramAuthContext actual constructor() {
     internal var context: Context? = null
 
-    constructor(context: Context) : this() {
+    public constructor(context: Context) : this() {
         this.context = context
     }
 }

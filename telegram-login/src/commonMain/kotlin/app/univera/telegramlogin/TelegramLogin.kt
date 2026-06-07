@@ -30,7 +30,7 @@ import kotlinx.serialization.json.Json
  * The returned [TelegramLoginResult.Success.idToken] is a JWT — verify it on
  * your backend against Telegram's JWKS before establishing a session.
  */
-object TelegramLogin {
+public object TelegramLogin {
 
     private data class Config(
         val clientId: String,
@@ -63,7 +63,7 @@ object TelegramLogin {
      * fallback on **iOS &lt; 17.4** (where `ASWebAuthenticationSession` cannot
      * intercept an `https` callback). On iOS 17.4+ and on Android it is ignored.
      */
-    fun configure(
+    public fun configure(
         clientId: String,
         redirectUri: String,
         scopes: List<String>,
@@ -77,7 +77,7 @@ object TelegramLogin {
      * falls back to an in-app web auth session. Suspends until [handle] (or the
      * web session) delivers the redirect, then returns the [TelegramLoginResult].
      */
-    suspend fun login(context: TelegramAuthContext): TelegramLoginResult {
+    public suspend fun login(context: TelegramAuthContext): TelegramLoginResult {
         val cfg = config ?: return TelegramLoginResult.Failure(TelegramLoginError.NotConfigured)
 
         val deferred = CompletableDeferred<TelegramLoginResult>()
@@ -114,7 +114,7 @@ object TelegramLogin {
      * Completes a pending [login] with the redirect [callbackUrl] delivered by
      * the OS. No-op when no login is in progress (safe to call for any URL).
      */
-    fun handle(callbackUrl: String) {
+    public fun handle(callbackUrl: String) {
         val deferred = pending ?: return
         pending = null
 

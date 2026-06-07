@@ -11,6 +11,7 @@ val libVersion = "0.1.0"
 
 kotlin {
     jvmToolchain(25)
+    explicitApi()
 
     compilerOptions {
         // expect/actual classes are still Beta — silence the warning.

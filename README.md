@@ -47,16 +47,29 @@ kotlin {
 
 ---
 
-## 2. Register your app with @BotFather
+## 2. Setup in BotFather
 
-Open [@BotFather](https://t.me/botfather) → **Bot Settings → Login Widget** and add your app. Telegram issues a per-app domain: **`https://app{appid}-login.tg.dev`**.
+Register **both** your Android and iOS apps with your bot so Telegram can verify them and issue each a secure redirect domain. Open [@BotFather](https://t.me/botfather) → **Bot Settings → Login Widget** — this is also where you get your bot's **`client_id`**.
 
-| Platform | Provide | Redirect URI |
-|---|---|---|
-| **Android** | Package name + **SHA-256** of the signing cert (use the **Play app-signing** key when Play App Signing is on; `./gradlew signingReport`) | `https://app{appid}-login.tg.dev/tglogin` |
-| **iOS** | Bundle ID + **Team ID** | `https://app{appid}-login.tg.dev` |
+For each registered app Telegram auto-generates a per-app domain **`https://app{appid}-login.tg.dev`** (the `{appid}` differs per app — Android vs iOS get different ones). The domain requires no manual registration.
 
-You also need your bot's **client_id** (the numeric bot id).
+### Android
+
+Telegram verifies your app's cryptographic signature. Provide:
+
+- **Package Name** — your application ID (e.g. `app.univera.android`).
+- **SHA-256 fingerprint** — of the signing keystore (`./gradlew signingReport`). **With Play App Signing enabled, use the Play _app-signing_ key's SHA-256**, not the upload key — App Link verification checks the certificate the *installed* (Play-delivered) app ships with.
+
+Redirect URI — **App Link (recommended):** `https://app{androidAppId}-login.tg.dev/tglogin` (only your verified app can intercept it). **Custom-scheme fallback:** `yourapp://telegram-login`.
+
+### iOS
+
+Provide:
+
+- **Bundle ID** — your app's identifier (e.g. `app.univera.ios`).
+- **Team ID** — your 10-character Apple Developer Team ID (e.g. `ABCDE12345`).
+
+Redirect URI — **Universal Link (recommended):** `https://app{iosAppId}-login.tg.dev` (prevents callback hijacking). **Custom-scheme fallback:** `yourapp://tglogin`.
 
 ---
 

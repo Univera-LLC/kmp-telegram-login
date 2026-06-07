@@ -45,10 +45,6 @@ kotlin {
 }
 ```
 
-### Swift (pure-iOS, optional)
-
-KMP consumers don't need this. For a non-KMP iOS app, consume the `TelegramLogin.xcframework` via SPM or CocoaPods — see [PUBLISHING.md](PUBLISHING.md) for the release artifacts.
-
 ---
 
 ## 2. Register your app with @BotFather

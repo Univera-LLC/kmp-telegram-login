@@ -2,12 +2,16 @@ package app.univera.telegramlogin.internal
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.cValue
+import kotlinx.cinterop.convert
 import kotlinx.cinterop.usePinned
 import platform.AuthenticationServices.ASPresentationAnchor
 import platform.AuthenticationServices.ASWebAuthenticationPresentationContextProvidingProtocol
 import platform.AuthenticationServices.ASWebAuthenticationSession
 import platform.AuthenticationServices.ASWebAuthenticationSessionCallback
 import platform.Foundation.NSError
+import platform.Foundation.NSOperatingSystemVersion
+import platform.Foundation.NSProcessInfo
 import platform.Foundation.NSURL
 import platform.Security.SecRandomCopyBytes
 import platform.Security.kSecRandomDefault
@@ -53,28 +57,52 @@ private class WebAuthAnchorProvider :
     ): ASPresentationAnchor = UIApplication.sharedApplication.keyWindow ?: UIWindow()
 }
 
+@OptIn(ExperimentalForeignApi::class)
+private fun isAtLeastIos174(): Boolean {
+    val target = cValue<NSOperatingSystemVersion> {
+        majorVersion = 17.convert()
+        minorVersion = 4.convert()
+        patchVersion = 0.convert()
+    }
+    return NSProcessInfo.processInfo.isOperatingSystemAtLeastVersion(target)
+}
+
 internal actual fun openWebAuth(
     context: TelegramAuthContext,
     authUrl: String,
     callbackHost: String,
+    fallbackScheme: String?,
     onComplete: (callbackUrl: String?, cancelled: Boolean) -> Unit,
 ): Boolean {
     val url = NSURL.URLWithString(authUrl) ?: return false
     val provider = WebAuthAnchorProvider()
 
-    val session = ASWebAuthenticationSession(
-        uRL = url,
-        callback = ASWebAuthenticationSessionCallback.callbackWithHTTPSHost(callbackHost, path = "/"),
-        completionHandler = { callbackURL: NSURL?, error: NSError? ->
-            activeWebAuthSession = null
-            activeAnchorProvider = null
-            when {
-                callbackURL != null -> onComplete(callbackURL.absoluteString, false)
-                error != null && error.code == CANCELED_LOGIN_CODE -> onComplete(null, true)
-                else -> onComplete(null, false)
-            }
-        },
-    )
+    val completion: (NSURL?, NSError?) -> Unit = { callbackURL, error ->
+        activeWebAuthSession = null
+        activeAnchorProvider = null
+        when {
+            callbackURL != null -> onComplete(callbackURL.absoluteString, false)
+            error != null && error.code == CANCELED_LOGIN_CODE -> onComplete(null, true)
+            else -> onComplete(null, false)
+        }
+    }
+
+    val session = when {
+        // iOS 17.4+: intercept the https universal-link callback directly.
+        isAtLeastIos174() && callbackHost.isNotEmpty() -> ASWebAuthenticationSession(
+            uRL = url,
+            callback = ASWebAuthenticationSessionCallback.callbackWithHTTPSHost(callbackHost, path = "/"),
+            completionHandler = completion,
+        )
+        // iOS < 17.4: an https callback can't be intercepted — needs a custom scheme.
+        fallbackScheme != null -> ASWebAuthenticationSession(
+            uRL = url,
+            callbackURLScheme = fallbackScheme,
+            completionHandler = completion,
+        )
+        else -> return false
+    }
+
     session.presentationContextProvider = provider
     session.prefersEphemeralWebBrowserSession = false
     activeWebAuthSession = session

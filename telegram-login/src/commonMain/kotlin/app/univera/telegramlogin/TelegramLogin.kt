@@ -36,6 +36,7 @@ object TelegramLogin {
         val clientId: String,
         val redirectUri: String,
         val scopes: List<String>,
+        val fallbackScheme: String? = null,
     )
 
     private val mutex = Mutex()
@@ -55,9 +56,20 @@ object TelegramLogin {
         )
     }
 
-    /** Stores the bot credentials. Must be called before [login]. */
-    fun configure(clientId: String, redirectUri: String, scopes: List<String>) {
-        config = Config(clientId, redirectUri, scopes)
+    /**
+     * Stores the bot credentials. Must be called before [login].
+     *
+     * [fallbackScheme] is an optional custom URL scheme used only by the iOS web
+     * fallback on **iOS &lt; 17.4** (where `ASWebAuthenticationSession` cannot
+     * intercept an `https` callback). On iOS 17.4+ and on Android it is ignored.
+     */
+    fun configure(
+        clientId: String,
+        redirectUri: String,
+        scopes: List<String>,
+        fallbackScheme: String? = null,
+    ) {
+        config = Config(clientId, redirectUri, scopes, fallbackScheme)
     }
 
     /**
@@ -167,7 +179,7 @@ object TelegramLogin {
         )
         val callbackHost = runCatching { Url(cfg.redirectUri).host }.getOrNull().orEmpty()
 
-        val started = openWebAuth(context, authUrl, callbackHost) { callbackUrl, cancelled ->
+        val started = openWebAuth(context, authUrl, callbackHost, cfg.fallbackScheme) { callbackUrl, cancelled ->
             when {
                 callbackUrl != null -> handle(callbackUrl)
                 cancelled -> finish(deferred, TelegramLoginResult.Failure(TelegramLoginError.Cancelled))

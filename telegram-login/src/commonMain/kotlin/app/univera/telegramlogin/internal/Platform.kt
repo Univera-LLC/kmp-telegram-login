@@ -36,5 +36,6 @@ internal expect fun openWebAuth(
     context: TelegramAuthContext,
     authUrl: String,
     callbackHost: String,
+    fallbackScheme: String?,
     onComplete: (callbackUrl: String?, cancelled: Boolean) -> Unit,
 ): Boolean

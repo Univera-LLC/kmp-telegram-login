@@ -98,7 +98,7 @@ Add **Associated Domains** `applinks:app<appid>-login.tg.dev` and `LSApplication
 ## Notes / limitations
 
 - The **"verified app" badge** and the **direct app-switch** are decided by Telegram's servers (publication + platform), identical to the official SDKs — this library does not change that.
-- The web fallback (when Telegram isn't installed) is not implemented in `0.1.0`; `login()` returns `TelegramLoginError.TelegramNotInstalled` so you can fall back (e.g. to SMS).
+- **Web fallback** (when Telegram isn't installed): Android opens a Custom Tab; iOS runs an `ASWebAuthenticationSession`. iOS **17.4+** works with the `https` redirect out of the box. For **iOS < 17.4**, pass a custom `fallbackScheme` to `configure(...)` (and register that scheme + a matching redirect) — otherwise `login()` returns `TelegramLoginError.TelegramNotInstalled` on older iOS without Telegram. This mirrors the official iOS SDK.
 
 ## License
 

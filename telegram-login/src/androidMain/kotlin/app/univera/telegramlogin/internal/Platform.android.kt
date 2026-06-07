@@ -41,6 +41,7 @@ internal actual fun openWebAuth(
     context: TelegramAuthContext,
     authUrl: String,
     callbackHost: String,
+    fallbackScheme: String?,
     onComplete: (callbackUrl: String?, cancelled: Boolean) -> Unit,
 ): Boolean {
     val ctx = context.context ?: return false
@@ -49,7 +50,7 @@ internal actual fun openWebAuth(
         tab.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         tab.launchUrl(ctx, Uri.parse(authUrl))
         // The redirect returns through the App Link into TelegramLogin.handle();
-        // [onComplete] / [callbackHost] are unused on Android.
+        // [onComplete] / [callbackHost] / [fallbackScheme] are unused on Android.
         true
     } catch (_: Exception) {
         false

@@ -1,7 +1,7 @@
 # kmp-telegram-login
 
 [![Kotlin](https://img.shields.io/badge/kotlin-2.3.21-blue.svg?logo=kotlin)](https://kotlinlang.org)
-[![Maven Central](https://img.shields.io/maven-central/v/app.univera.telegramlogin/telegram-login)](https://central.sonatype.com/artifact/app.univera.telegramlogin/telegram-login)
+[![Maven Central](https://img.shields.io/maven-central/v/app.univera.telegramlogin/telegram-login)](https://central.sonatype.com/search?namespace=app.univera.telegramlogin)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-blue)
 

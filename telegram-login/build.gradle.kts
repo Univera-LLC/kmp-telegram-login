@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKmpLibrary)
@@ -7,7 +5,7 @@ plugins {
     alias(libs.plugins.vanniktechMavenPublish)
 }
 
-val libVersion = "0.1.0"
+val libVersion = "0.2.0"
 
 kotlin {
     jvmToolchain(25)
@@ -26,18 +24,8 @@ kotlin {
         withHostTest {}
     }
 
-    val xcframework = XCFramework("TelegramLogin")
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-        iosX64(),
-    ).forEach { target ->
-        target.binaries.framework {
-            baseName = "TelegramLogin"
-            isStatic = true
-            xcframework.add(this)
-        }
-    }
+    iosArm64()
+    iosSimulatorArm64()
 
     sourceSets {
         commonMain.dependencies {

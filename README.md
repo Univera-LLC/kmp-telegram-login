@@ -97,23 +97,40 @@ Declare the App Link on the Activity that handles the callback, and let the app 
 
 ## 4. Initialize (once at startup)
 
+`configure()` is part of the common API, but the **`redirectUri` is per-platform**: BotFather issues a *different* `app{appid}-login.tg.dev` host for your Android app vs your iOS app, and Android's App Link uses the `/tglogin` path while iOS uses the bare host. Only `clientId` and `scopes` are the same on both — so supply the redirect via `expect/actual`:
+
 ```kotlin
+// commonMain
 import app.univera.telegramlogin.TelegramLogin
 
-TelegramLogin.configure(
-    clientId = "YOUR_BOT_CLIENT_ID",
-    redirectUri = "https://app{appid}-login.tg.dev/tglogin", // iOS: drop the /tglogin path
+internal expect val telegramRedirectUri: String
+
+fun initTelegramLogin() = TelegramLogin.configure(
+    clientId = "YOUR_BOT_CLIENT_ID",          // your bot id — same on both platforms
+    redirectUri = telegramRedirectUri,
     scopes = listOf("openid", "phone"),
-    // fallbackScheme = "yourapp",   // optional: iOS < 17.4 web fallback (see below)
+    // fallbackScheme = "yourapp",            // optional: iOS < 17.4 web fallback
 )
 ```
 
+```kotlin
+// androidMain — Android app's host, WITH the /tglogin path
+internal actual val telegramRedirectUri = "https://app<androidAppId>-login.tg.dev/tglogin"
+```
+
+```kotlin
+// iosMain — iOS app's host, NO path
+internal actual val telegramRedirectUri = "https://app<iosAppId>-login.tg.dev"
+```
+
+Call `initTelegramLogin()` once at startup (e.g. `Application.onCreate`, or a shared init invoked from each platform's entry point).
+
 | Parameter | Description |
 |---|---|
-| `clientId` | **Required.** Your bot's client id from @BotFather. |
-| `redirectUri` | **Required.** The exact `https://app{appid}-login.tg.dev[/tglogin]` URL. |
+| `clientId` | **Required.** Your bot's client id — **same** on both platforms. |
+| `redirectUri` | **Required, per-platform.** The `app{appid}-login.tg.dev` URL from @BotFather — host differs Android vs iOS; `/tglogin` on Android, bare host on iOS. |
 | `scopes` | **Required.** e.g. `["openid", "phone"]`. |
-| `fallbackScheme` | Optional custom URL scheme for the iOS < 17.4 web fallback. |
+| `fallbackScheme` | Optional custom scheme for the iOS < 17.4 web fallback. |
 
 ---
 

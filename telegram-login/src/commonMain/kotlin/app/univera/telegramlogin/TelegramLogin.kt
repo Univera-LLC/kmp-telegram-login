@@ -4,6 +4,7 @@ import app.univera.telegramlogin.internal.Pkce
 import app.univera.telegramlogin.internal.TelegramAuthContext
 import app.univera.telegramlogin.internal.TelegramOAuthClient
 import app.univera.telegramlogin.internal.openExternalUri
+import app.univera.telegramlogin.internal.openWebAuth
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.Url
@@ -22,7 +23,7 @@ import kotlinx.serialization.json.Json
  *
  * Usage:
  * 1. Call [configure] once at app startup.
- * 2. Call [login] from shared code — it opens Telegram and suspends.
+ * 2. Call [login] from shared code — it opens Telegram (or the web fallback) and suspends.
  * 3. Forward the redirect URL to [handle] from your platform entry point
  *    (Android `onNewIntent`, iOS `onOpenURL` / `continue`) to resume [login].
  *
@@ -60,15 +61,19 @@ object TelegramLogin {
     }
 
     /**
-     * Starts the login flow: opens Telegram, then suspends until [handle]
-     * receives the redirect. Returns the final [TelegramLoginResult].
+     * Starts the login flow: opens the Telegram app when installed, otherwise
+     * falls back to an in-app web auth session. Suspends until [handle] (or the
+     * web session) delivers the redirect, then returns the [TelegramLoginResult].
      */
     suspend fun login(context: TelegramAuthContext): TelegramLoginResult {
         val cfg = config ?: return TelegramLoginResult.Failure(TelegramLoginError.NotConfigured)
 
         val deferred = CompletableDeferred<TelegramLoginResult>()
+        val challenge: String
         mutex.withLock {
-            codeVerifier = Pkce.createVerifier()
+            val verifier = Pkce.createVerifier()
+            codeVerifier = verifier
+            challenge = Pkce.challengeFor(verifier)
             pending = deferred
         }
 
@@ -77,13 +82,12 @@ object TelegramLogin {
                 clientId = cfg.clientId,
                 redirectUri = cfg.redirectUri,
                 scopes = cfg.scopes,
-                codeChallenge = Pkce.challengeFor(requireNotNull(codeVerifier)),
+                codeChallenge = challenge,
             )
             if (openExternalUri(context, tgUrl)) {
                 deferred.await()
             } else {
-                clearPending()
-                TelegramLoginResult.Failure(TelegramLoginError.TelegramNotInstalled)
+                startWebFallback(context, cfg, challenge, deferred)
             }
         } catch (e: TelegramLoginError) {
             clearPending()
@@ -110,17 +114,17 @@ object TelegramLogin {
 
         val params = runCatching { Url(callbackUrl).parameters }.getOrNull()
         params?.get("error")?.let { error ->
-            deferred.complete(TelegramLoginResult.Failure(TelegramLoginError.Unexpected(error)))
+            finish(deferred, TelegramLoginResult.Failure(TelegramLoginError.Unexpected(error)))
             return
         }
         val code = params?.get("code")
         if (code.isNullOrBlank()) {
-            deferred.complete(TelegramLoginResult.Failure(TelegramLoginError.NoAuthorizationCode))
+            finish(deferred, TelegramLoginResult.Failure(TelegramLoginError.NoAuthorizationCode))
             return
         }
         val verifier = codeVerifier
         if (verifier == null) {
-            deferred.complete(TelegramLoginResult.Failure(TelegramLoginError.Unexpected("No active PKCE session.")))
+            finish(deferred, TelegramLoginResult.Failure(TelegramLoginError.Unexpected("No active PKCE session.")))
             return
         }
 
@@ -142,6 +146,47 @@ object TelegramLogin {
             codeVerifier = null
             deferred.complete(result)
         }
+    }
+
+    /**
+     * Telegram isn't installed — open the hosted web login. On iOS the web
+     * session reports the callback URL directly; on Android the redirect
+     * returns through the App Link into [handle].
+     */
+    private suspend fun startWebFallback(
+        context: TelegramAuthContext,
+        cfg: Config,
+        challenge: String,
+        deferred: CompletableDeferred<TelegramLoginResult>,
+    ): TelegramLoginResult {
+        val authUrl = oauth.buildAuthUrl(
+            clientId = cfg.clientId,
+            redirectUri = cfg.redirectUri,
+            scopes = cfg.scopes,
+            codeChallenge = challenge,
+        )
+        val callbackHost = runCatching { Url(cfg.redirectUri).host }.getOrNull().orEmpty()
+
+        val started = openWebAuth(context, authUrl, callbackHost) { callbackUrl, cancelled ->
+            when {
+                callbackUrl != null -> handle(callbackUrl)
+                cancelled -> finish(deferred, TelegramLoginResult.Failure(TelegramLoginError.Cancelled))
+                else -> finish(deferred, TelegramLoginResult.Failure(TelegramLoginError.Unexpected("Web authentication failed.")))
+            }
+        }
+
+        return if (started) {
+            deferred.await()
+        } else {
+            clearPending()
+            TelegramLoginResult.Failure(TelegramLoginError.TelegramNotInstalled)
+        }
+    }
+
+    private fun finish(deferred: CompletableDeferred<TelegramLoginResult>, result: TelegramLoginResult) {
+        codeVerifier = null
+        pending = null
+        deferred.complete(result)
     }
 
     private fun clearPending() {

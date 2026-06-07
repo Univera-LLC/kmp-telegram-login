@@ -8,6 +8,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Parameters
+import io.ktor.http.URLBuilder
 import io.ktor.http.isSuccess
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -69,6 +70,21 @@ internal class TelegramOAuthClient(
         val body = response.body<TokenResponse>()
         return body.idToken ?: throw TelegramLoginError.Unexpected(body.error ?: "No id_token in response.")
     }
+
+    /** Builds the hosted `/auth` URL used by the web fallback (no `*_sdk` marker). */
+    fun buildAuthUrl(
+        clientId: String,
+        redirectUri: String,
+        scopes: List<String>,
+        codeChallenge: String,
+    ): String = URLBuilder("$baseUrl/auth").apply {
+        parameters.append("client_id", clientId)
+        parameters.append("response_type", "code")
+        parameters.append("scope", normalizeScopes(scopes))
+        parameters.append("redirect_uri", redirectUri)
+        parameters.append("code_challenge", codeChallenge)
+        parameters.append("code_challenge_method", "S256")
+    }.buildString()
 
     /** Ensures `openid` is always requested, de-duplicating caller scopes. */
     private fun normalizeScopes(scopes: List<String>): String =

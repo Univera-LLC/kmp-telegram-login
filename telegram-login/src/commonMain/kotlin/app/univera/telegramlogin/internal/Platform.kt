@@ -20,3 +20,21 @@ expect class TelegramAuthContext()
  * Telegram app. Returns `false` if it cannot be opened (e.g. Telegram missing).
  */
 internal expect fun openExternalUri(context: TelegramAuthContext, uri: String): Boolean
+
+/**
+ * Web fallback when the Telegram app is unavailable: opens [authUrl] in an
+ * in-app browser whose redirect host is [callbackHost].
+ *
+ * - **iOS:** runs an `ASWebAuthenticationSession`; the captured redirect (or a
+ *   cancellation) is reported through [onComplete].
+ * - **Android:** opens a Custom Tab; the redirect returns via the App Link into
+ *   [app.univera.telegramlogin.TelegramLogin.handle], so [onComplete] is not used.
+ *
+ * Returns `false` if the session/tab could not be started.
+ */
+internal expect fun openWebAuth(
+    context: TelegramAuthContext,
+    authUrl: String,
+    callbackHost: String,
+    onComplete: (callbackUrl: String?, cancelled: Boolean) -> Unit,
+): Boolean

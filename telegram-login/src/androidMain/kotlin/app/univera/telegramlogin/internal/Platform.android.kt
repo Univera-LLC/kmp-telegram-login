@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
 import java.security.SecureRandom
 
 internal actual fun secureRandomBytes(size: Int): ByteArray =
@@ -32,6 +33,25 @@ internal actual fun openExternalUri(context: TelegramAuthContext, uri: String): 
         )
         true
     } catch (_: ActivityNotFoundException) {
+        false
+    }
+}
+
+internal actual fun openWebAuth(
+    context: TelegramAuthContext,
+    authUrl: String,
+    callbackHost: String,
+    onComplete: (callbackUrl: String?, cancelled: Boolean) -> Unit,
+): Boolean {
+    val ctx = context.context ?: return false
+    return try {
+        val tab = CustomTabsIntent.Builder().setShowTitle(true).build()
+        tab.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        tab.launchUrl(ctx, Uri.parse(authUrl))
+        // The redirect returns through the App Link into TelegramLogin.handle();
+        // [onComplete] / [callbackHost] are unused on Android.
+        true
+    } catch (_: Exception) {
         false
     }
 }

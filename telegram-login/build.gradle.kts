@@ -4,7 +4,10 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKmpLibrary)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.vanniktechMavenPublish)
 }
+
+val libVersion = "0.1.0"
 
 kotlin {
     jvmToolchain(25)
@@ -53,10 +56,52 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.browser)
         }
 
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+        }
+    }
+}
+
+mavenPublishing {
+    // No-arg defaults to the Sonatype Central Portal (accounts created after 2024-03).
+    publishToMavenCentral()
+
+    // Sign only when keys are present (CI / release) so local builds and
+    // publishToMavenLocal keep working without GPG configured.
+    if (providers.gradleProperty("signingInMemoryKey").isPresent ||
+        providers.gradleProperty("signing.keyId").isPresent
+    ) {
+        signAllPublications()
+    }
+
+    coordinates("app.univera.telegramlogin", "telegram-login", libVersion)
+
+    pom {
+        name = "Telegram Login KMP"
+        description = "Kotlin Multiplatform SDK for Telegram native login (OAuth2 + PKCE) on Android and iOS."
+        inceptionYear = "2026"
+        url = "https://github.com/Univera-LLC/kmp-telegram-login"
+        licenses {
+            license {
+                name = "MIT License"
+                url = "https://opensource.org/licenses/MIT"
+                distribution = "https://opensource.org/licenses/MIT"
+            }
+        }
+        developers {
+            developer {
+                id = "univera"
+                name = "Univera LLC"
+                url = "https://univera.app"
+            }
+        }
+        scm {
+            url = "https://github.com/Univera-LLC/kmp-telegram-login"
+            connection = "scm:git:git://github.com/Univera-LLC/kmp-telegram-login.git"
+            developerConnection = "scm:git:ssh://git@github.com/Univera-LLC/kmp-telegram-login.git"
         }
     }
 }

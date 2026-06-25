@@ -1,6 +1,6 @@
 # kmp-telegram-login
 
-[![Kotlin](https://img.shields.io/badge/kotlin-2.3.21-blue.svg?logo=kotlin)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.4.0-blue.svg?logo=kotlin)](https://kotlinlang.org)
 [![Maven Central](https://img.shields.io/maven-central/v/app.univera.telegramlogin/telegram-login)](https://central.sonatype.com/search?namespace=app.univera.telegramlogin)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-blue)
@@ -24,7 +24,7 @@ Telegram ships **separate** native SDKs for [Android](https://github.com/Telegra
 
 ## Requirements
 
-- Kotlin **2.3.21+** (the library is built with 2.3.21 for broad consumer compatibility).
+- Kotlin **2.4.0+** — built with 2.4.0; consumers must be on Kotlin 2.4.x or newer (the klib metadata ABI is forward-incompatible with 2.3.x).
 - Android **minSdk 23+**, iOS **15.0+** (web fallback auto-opens on iOS 17.4+ — see [Web fallback](#web-fallback)).
 - A Telegram bot registered with [@BotFather](https://t.me/botfather).
 
@@ -39,7 +39,7 @@ Telegram ships **separate** native SDKs for [Android](https://github.com/Telegra
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("app.univera.telegramlogin:telegram-login:0.1.0")
+            implementation("app.univera.telegramlogin:telegram-login:0.3.0")
         }
     }
 }
